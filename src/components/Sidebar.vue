@@ -10,13 +10,13 @@
         </button>
       </div>
       <div class="menu">
-        <router-link to="/home" class="button">
-          <span class="material-symbols-outlined">house</span>
-          <span class="text">Home</span>
-        </router-link>
         <router-link to="/user" class="button">
           <span class="material-symbols-outlined">group</span>
           <span class="text">User</span>
+        </router-link>
+        <router-link to="/home" class="button">
+          <span class="material-symbols-outlined">package</span>
+          <span class="text">Order List</span>
         </router-link>
         <router-link to="/admin" class="button">
           <span class="material-symbols-outlined">admin_panel_settings</span>

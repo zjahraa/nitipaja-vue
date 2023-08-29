@@ -1,123 +1,134 @@
 <template>
-    <div class="login">
-        <br>
-      <div class="header">
-        <img :src="logoImageUrl" alt="Logo" height="100" width="100" />
-        <h1>Masuk</h1>
+      <div class="body-admin">
+        <button class="submit-btn" @click="handleCreateAdmin">Tambah Admin</button>
+          <table class="table-admin">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama</th>
+                <th>Email</th>
+                <th>Role</th>
+                <br><br><br><br>
+                <th class="has-text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(item , index) in itemlist" :key="item.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ item.nama }}</td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.role }}</td>
+                <br>
+                <td class="has-text-right">
+                  <div class="button-group">
+                    <button @click="deleteItem(item.id)" class="button is-danger ml-2">Delete</button>
+                    <button @click="SendEmail(item.id)" class="button is-warning ml-2">Send Email</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
       </div>
-      <form @submit.prevent="handleSubmit" class="login-form">
-        <input
-          name="email"
-          placeholder="Email"
-          type="email"
-          class="login-input"
-        />
-        <input
-          name="password"
-          placeholder="Password"
-          type="password"
-          class="login-input"
-        />
-        <br><br><br><br>
-        <button type="submit" class="login-btn">Login</button>
-      </form>
-      <br><br><br>
-      <div class="donthaveaccount">
-        <p>Belum punya akun? <router-link to="/register">Daftar</router-link></p>
-      </div>
-    </div>
-</template>
+  </template>
   
-<script>
-  import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+  <script>
+  import { useAuthState, db } from "../firebase";
+  import { ref, onMounted } from "vue";
+  import { collection, onSnapshot, doc, deleteDoc, query, orderBy } from "firebase/firestore";
   import { useRouter } from "vue-router";
   
-  export default {
-    name: "LoginForm",
-    setup() {
-      const auth = getAuth();
-      const router = useRouter();
+  const datalistCollectionRef = collection(db, "CreateAdmin");
+  const datalistCollectionQuery = query(datalistCollectionRef, orderBy("nama", "desc"));
   
-      const handleSubmit = async (e) => {
-        const { email, password } = e.target.elements;
+  export default {
+    name: "AdminPage",
+    setup() {
+      const { user } = useAuthState();
+      const newItem = ref('');
+      const itemlist = ref([]);
+  
+      onMounted(() => {
+        let tmpArr = [];
+        onSnapshot(datalistCollectionQuery, (querySnapshot) => {
+          tmpArr = [];
+          querySnapshot.forEach((doc) => {
+            const tmpItem = {
+              nama: doc.data().nama,
+              email: doc.data().email,
+              role: doc.data().role,
+              id: doc.id,
+            };
+            tmpArr.push(tmpItem);
+          });
+          itemlist.value = tmpArr;
+        });
+      });
+  
+      const deleteItem = async id => {
         try {
-          await signInWithEmailAndPassword(auth, email.value, password.value);
-          router.push("/Sidebar");
-        } catch (e) {
-          alert(e.message);
+          await deleteDoc(doc(datalistCollectionRef, id));
+          console.log("Deleted item with ID:", id);
+        } catch (error) {
+          console.error("Error deleting document:", error);
         }
       };
   
-      return {
-        handleSubmit ,
-        logoImageUrl: 'https://shopper.nitipaja.online/storage/images/nitipaja.png',
-     };
+      const SendEmail = () => {
+        router.push("/Sendemail");
+      };
+  
+      const router = useRouter();
+  
+      const handleCreateAdmin = () => {
+        router.push("/createadmin");
+      };
+  
+      return { user, itemlist, newItem, deleteItem, SendEmail, handleCreateAdmin };
     },
   };
-</script>
+  </script>
   
-<style>
-  .login {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-  }
-  
-  .header {
-    text-align: center;
-    margin-bottom: 20px;
-  }
+ <style>
 
-  .header h1 {
-    font-size: 24px;
-    margin-top: 10px;
-  }
-  
-  .login-input {
-    width: 90%;
-    height: 50px;
-    font-size: 17px;
-    padding: 0 25px;
-    margin-bottom: 15px;
-    border-radius: 10px; /* Penyesuaian lengkungan */
-    border: 1px solid #ccc;
-  }
-  
-  .login-btn {
-    width: 100%;
-    height: 50px;
-    border-radius: 30px;
-    border: none;
-    background-color: #4677d5;
-    color: #fff;
-    font-size: 17px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  
-  .login-btn:hover {
-    background-color: #345dbf;
-  }
-    .login-form {
-        width: 100%;
-        max-width: 400px;
-    }
-    .dont-have-account{
-      display: flex;
-      justify-content: center;
-      font-size: 17px;
-      color: #000;
-      font-weight: 500;
-  }
-    .dont-have-account a{
-        color: #4677D5;
-        margin-left: 5px;
+.body-admin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+}
 
-    }
-    .dont-have-account a:hover{
-        text-decoration: underline;
-    }
-</style>
+.table-admin {
+  width: 60%; /* Adjust as needed */
+  border-collapse: collapse;
+  margin-top: 20px;
+  border: 1px solid #ccc;
+}
+
+.table-admin th,
+.table-admin td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 20px;
+
+}
+
+.submit-btn {
+  width: 150px; /* Adjust as needed */
+  height: 40px;
+  background-color: #4677D5;
+  color: white;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+</style> 
   
